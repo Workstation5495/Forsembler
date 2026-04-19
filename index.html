@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forsembler OS Constructor v26.0.1.0</title>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --glass: rgba(255, 255, 255, 0.05);
+            --text-main: #f8fafc;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+        }
+
+        /* Header UI */
+        header {
+            height: 60px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo-area { display: flex; align-items: center; gap: 15px; }
+        .logo-area h1 { font-size: 1.2rem; letter-spacing: 1px; margin: 0; }
+        .version-badge { background: var(--accent-blue); padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; }
+
+        .author-link {
+            color: var(--accent-blue);
+            text-decoration: none;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.3s;
+        }
+        .author-link:hover { color: var(--accent-green); }
+
+        /* Main Layout */
+        main {
+            display: flex;
+            height: calc(100vh - 110px);
+            padding: 10px;
+            gap: 10px;
+        }
+
+        #blocklyDiv {
+            flex: 2;
+            background: var(--glass);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-right {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Virtual Monitor */
+        .monitor {
+            flex: 1;
+            background: #000;
+            border: 8px solid #334155;
+            border-radius: 15px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+        .screen-content {
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+        }
+
+        /* Action Buttons */
+        .controls {
+            padding: 15px;
+            background: var(--glass);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            text-transform: uppercase;
+        }
+        .btn-compile { background: var(--accent-green); color: white; }
+        .btn-compile:hover { transform: scale(1.02); box-shadow: 0 0 15px var(--accent-green); }
+
+        footer {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            opacity: 0.6;
+            background: rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-area">
+        <i class="fas fa-microchip"></i>
+        <h1>FORSEMBLER <span style="font-weight: 300;">OS Constructor</span></h1>
+        <span class="version-badge">v26.0.1.0</span>
+    </div>
+    <a href="https://github.com/Workstation5495" class="author-link" target="_blank">
+        <i class="fab fa-github"></i> Workstation5495
+    </a>
+</header>
+
+<main>
+    <div id="blocklyDiv"></div>
+
+    <div class="sidebar-right">
+        <div class="monitor">
+            <div class="screen-content" id="os-preview">
+                [SYSTEM READY]<br>
+                > Booting Forsembler Kernel...<br>
+                > Loading modules...<br>
+                <span id="preview-text">Waiting for blocks...</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-compile" onclick="startCompilation()">
+                <i class="fas fa-download"></i> Build and Download .ISO
+            </button>
+            <p style="font-size: 0.7rem; text-align: center; margin: 0;">Target: x86_64 Generic Architecture</p>
+        </div>
+    </div>
+</main>
+
+<footer>
+    &copy; 2026 Forsembler Project by Workstation5495. All rights reserved.
+</footer>
+
+<xml id="toolbox" style="display: none">
+    <category name="Events" colour="#5b67a5">
+        <block type="on_boot"></block>
+    </category>
+    <category name="Kernel UI" colour="#5ba55b">
+        <block type="print_str"></block>
+        <block type="clear_screen"></block>
+        <block type="set_bg_color"></block>
+    </category>
+    <category name="Logic" colour="#a55b80">
+        <block type="controls_if"></block>
+        <block type="logic_compare"></block>
+    </category>
+</xml>
+
+<script>
+    // 1. Define custom blocks for Forsembler
+    Blockly.Blocks['on_boot'] = {
+        init: function() {
+            this.appendDummyInput().appendField("🚀 ON SYSTEM BOOT");
+            this.setNextStatement(true);
+            this.setColour(230);
+        }
+    };
+
+    Blockly.Blocks['print_str'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("PRINT TEXT:")
+                .appendField(new Blockly.FieldTextInput("Hello OS!"), "VAL");
+            this.setPreviousStatement(true);
+            this.setNextStatement(true);
+            this.setColour(160);
+        }
+    };
+
+    Blockly.Blocks['set_bg_color'] = {
+        init: function() {
+            this.appendDummyInput()
+                .appendField("SET BG COLOR:")
+                .appendField(new Blockly.FieldColour("#000000"), "COL");
+            this.setPreviousStatement(true);
+            this.setNextStatement(true);
+            this.setColour(160);
+        }
+    };
+
+    // 2. Initialize Workspace
+    const workspace = Blockly.inject('blocklyDiv', {
+        toolbox: document.getElementById('toolbox'),
+        theme: 'dark',
+        grid: {spacing: 20, length: 3, colour: '#ccc', snap: true}
+    });
+
+    // 3. Real-time Preview Logic
+    workspace.addChangeListener(() => {
+        // Here we will eventually parse blocks to update the monitor
+        const blocks = workspace.getAllBlocks();
+        const preview = document.getElementById('preview-text');
+        if(blocks.length > 1) {
+            preview.innerHTML = "> Code generated successfully.<br>> Ready to compile.";
+        }
+    });
+
+    // 4. Compilation Trigger
+    function startCompilation() {
+        alert("FORSEMBLER ENGINE:\nStarting x86 compilation for Workstation5495...\n\nVersion: 26.0.1.0\nStatus: Initializing GitHub Actions runner...");
+        // API Call to GitHub Actions will go here
+    }
+</script>
+
+</body>
+</html>
